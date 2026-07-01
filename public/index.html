@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp AI — Activity</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: system-ui, sans-serif; background: #111; color: #e0e0e0; padding: 20px; }
+h1 { font-size: 1.2rem; margin-bottom: 16px; display: flex; align-items: center; gap: 12px; }
+#away-badge { font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; font-weight: 600; }
+#away-badge.on { background: #16a34a; color: #fff; }
+#away-badge.off { background: #444; color: #999; }
+table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #2a2a2a; }
+th { background: #1a1a1a; color: #888; font-weight: 500; position: sticky; top: 0; }
+td { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.error { color: #ef4444; }
+tr:hover { background: #1e1e1e; }
+#log { max-height: 80vh; overflow-y: auto; border: 1px solid #2a2a2a; border-radius: 8px; }
+.timestamp { color: #666; white-space: nowrap; }
+.sender { color: #93c5fd; }
+.msg { color: #e0e0e0; }
+.response { color: #86efac; }
+</style>
+</head>
+<body>
+<h1>WhatsApp AI Activity <span id="away-badge" class="off">AWAY OFF</span></h1>
+<div id="log">
+<table><thead><tr><th>Time</th><th>Sender</th><th>Message</th><th>Response</th></tr></thead><tbody id="tbody"></tbody></table>
+</div>
+<script>
+const tbody = document.getElementById('tbody')
+const badge = document.getElementById('away-badge')
+
+const evtSource = new EventSource('/events')
+evtSource.onmessage = (e) => {
+  const d = JSON.parse(e.data)
+  if (d.type === 'away') {
+    badge.textContent = d.enabled ? 'AWAY ON' : 'AWAY OFF'
+    badge.className = d.enabled ? 'on' : 'off'
+    return
+  }
+  const tr = document.createElement('tr')
+  const ts = new Date(d.timestamp).toLocaleTimeString()
+  tr.innerHTML = `<td class="timestamp">${ts}</td><td class="sender">${esc(d.sender)}</td><td class="msg">${esc(d.message)}</td><td class="${d.error ? 'error' : 'response'}">${esc(d.response || d.error || '...')}</td>`
+  tbody.prepend(tr)
+}
+
+setInterval(async () => {
+  const r = await fetch('/status')
+  const s = await r.json()
+  badge.textContent = s.awayMode ? 'AWAY ON' : 'AWAY OFF'
+  badge.className = s.awayMode ? 'on' : 'off'
+}, 2000)
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML }
+</script>
+</body>
+</html>
