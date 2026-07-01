@@ -80,8 +80,8 @@ RUN groupadd -r openwa && useradd -r -g openwa openwa
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy package files from builder stage (guaranteed valid lockfile)
+COPY --from=builder /app/package*.json ./
 
 # Install production dependencies only
 RUN npm ci --omit=dev && npm cache clean --force
