@@ -1,6 +1,7 @@
 import 'dotenv/config'
-import { Client, LocalAuth } from 'whatsapp-web.js'
+import pkg from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
+const { Client, LocalAuth } = pkg
 import { init as initState } from './src/state.js'
 import { init as initAI } from './src/ai.js'
 import { init as initSheets } from './src/sheets.js'
@@ -17,11 +18,14 @@ initSheets()
 const client = new Client({
   authStrategy: new LocalAuth(),
   puppeteer: {
+    executablePath: '/usr/bin/chromium',
+    headless: 'shell',
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
+      '--disable-extensions',
     ],
   },
 })
