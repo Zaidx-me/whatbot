@@ -1,8 +1,8 @@
 import OpenAI from 'openai'
 import express from 'express'
 
-const CODING_MODEL = 'nvidia/llama-3.1-nemotron-70b-instruct'
-const GENERAL_MODEL = 'openai/gpt-oss-120b'
+const CODING_MODEL = 'mistralai/codestral-22b-instruct-v0.1'
+const GENERAL_MODEL = 'meta/llama-3.1-8b-instruct'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
@@ -35,7 +35,7 @@ async function getReply(message) {
       { role: 'system', content: system },
       { role: 'user', content: message },
     ],
-    max_tokens: 1024,
+    max_tokens: 512,
     temperature: 0.7,
   })
   const content = completion.choices[0]?.message?.content
