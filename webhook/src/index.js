@@ -14,7 +14,8 @@ function isCodingQuery(text) {
 
 const NVIDIA_BASE_URL = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1'
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
-const WHATSAPP_BASE_URL = process.env.WHATSAPP_BASE_URL
+let WHATSAPP_BASE_URL = process.env.WHATSAPP_BASE_URL
+if (WHATSAPP_BASE_URL && !WHATSAPP_BASE_URL.startsWith('http')) WHATSAPP_BASE_URL = 'https://' + WHATSAPP_BASE_URL
 const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
