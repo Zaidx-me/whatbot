@@ -25,16 +25,24 @@ export async function getReply(message) {
     ? 'You are a helpful coding assistant. Provide concise, correct answers.'
     : 'You are a helpful assistant. Be friendly and concise.'
 
-  const completion = await client.chat.completions.create({
-    model,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: message },
-    ],
-    max_tokens: 1024,
-    temperature: 0.7,
-    timeout: 30000,
-  })
+  try {
+    const completion = await client.chat.completions.create({
+      model,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: message },
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+      timeout: 30000,
+    })
 
-  return completion.choices[0].message.content.trim()
+    return completion.choices[0].message.content.trim()
+  } catch (err) {
+    console.error('NVIDIA API error:', err.status, err.message)
+    if (err.status === 401) throw new Error('NVIDIA API key is invalid or expired')
+    if (err.status === 404) throw new Error(`Model "${model}" not found at NVIDIA NIM`)
+    if (err.code === 'ETIMEDOUT') throw new Error('NVIDIA API timed out — check network')
+    throw new Error(`AI error: ${err.message}`)
+  }
 }

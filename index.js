@@ -5,6 +5,7 @@ const { Client, LocalAuth } = pkg
 import { init as initAI } from './src/ai.js'
 import { init as initSheets } from './src/sheets.js'
 import { setup as setupWhatsApp } from './src/whatsapp.js'
+import { startServer } from './server.js'
 
 initAI()
 initSheets()
@@ -14,14 +15,13 @@ const client = new Client({
   webVersionCache: { type: 'none' },
   puppeteer: {
     executablePath: '/usr/bin/chromium',
-    headless: 'shell',
+    headless: true,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
     ],
-    defaultViewport: null,
   },
 })
 
@@ -31,6 +31,7 @@ client.on('qr', (qr) => {
 
 client.on('ready', () => {
   console.log('WhatsApp AI Assistant is ready')
+  startServer(process.env.DASHBOARD_PORT || 3000)
 })
 
 client.on('auth_failure', (msg) => console.error('Auth failure:', msg))
