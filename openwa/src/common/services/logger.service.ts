@@ -165,7 +165,7 @@ export class LoggerService implements NestLoggerService {
       .join(' ');
 
     let line =
-      `${paint(levelColor, `[OpenWA] ${process.pid}  -`)} ${timestamp} ` +
+      `${paint(levelColor, `[whatbot] ${process.pid}  -`)} ${timestamp} ` +
       `${paint(levelColor, label)} ${paint(ANSI.yellow, `[${contextName}]`)} ${paint(levelColor, message)}`;
 
     if (meta) {

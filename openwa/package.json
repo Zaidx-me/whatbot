@@ -1,8 +1,8 @@
 {
-  "name": "openwa",
+  "name": "whatbot",
   "version": "0.7.17",
-  "description": "Open Source WhatsApp API Gateway - Free, Self-Hosted HTTP API for WhatsApp",
-  "author": "Yudhi Armyndharis & OpenWA Contributors",
+  "description": "whatbot — WhatsApp AI Assistant Gateway, powered by OpenWA",
+  "author": "zaidxme",
   "private": true,
   "license": "MIT",
   "scripts": {

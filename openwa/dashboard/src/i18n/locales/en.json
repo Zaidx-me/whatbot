@@ -6,7 +6,7 @@
     }
   },
   "common": {
-    "appName": "OpenWA",
+    "appName": "whatbot",
     "appSubtitle": "WhatsApp API",
     "loading": "Loading...",
     "save": "Save",

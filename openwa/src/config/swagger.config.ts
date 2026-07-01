@@ -7,7 +7,7 @@ import { DocumentBuilder, OpenAPIObject } from '@nestjs/swagger';
 export const API_KEY_SECURITY_SCHEME = 'X-API-Key';
 
 /**
- * Builds the OpenAPI document configuration for the OpenWA API.
+ * Builds the OpenAPI document configuration for the whatbot API.
  */
 export function createSwaggerConfig(): Omit<OpenAPIObject, 'paths'> {
   // Source the API version from package.json so it tracks releases automatically — no manual bump, no drift.
@@ -15,8 +15,8 @@ export function createSwaggerConfig(): Omit<OpenAPIObject, 'paths'> {
   const { version } = require('../../package.json') as { version: string };
   return (
     new DocumentBuilder()
-      .setTitle('OpenWA API')
-      .setDescription('Open Source WhatsApp API Gateway - Free, Self-Hosted HTTP API')
+      .setTitle('whatbot API')
+      .setDescription('whatbot — WhatsApp AI Assistant Gateway')
       .setVersion(version)
       .addApiKey({ type: 'apiKey', name: 'X-API-Key', in: 'header' }, API_KEY_SECURITY_SCHEME)
       // Apply the scheme globally so Swagger UI sends the key with every request

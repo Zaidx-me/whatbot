@@ -54,7 +54,7 @@ import {
 import { ConcurrencyLimiter } from './concurrency-limiter';
 
 /** Linked-device identity shown in WhatsApp (Settings → Linked Devices). */
-const BAILEYS_BROWSER: [string, string, string] = ['OpenWA', 'Chrome', '120.0.0'];
+const BAILEYS_BROWSER: [string, string, string] = ['whatbot', 'Chrome', '120.0.0'];
 
 /** Fully silent logger so Baileys does not spam stdout; diagnostics flow via connection.update. */
 function createSilentLogger(): BaileysLogger {
