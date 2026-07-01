@@ -1,0 +1,14 @@
+[Unit]
+Description=WhatsApp AI Assistant
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/run/media/zaidxme/University/Summer/Whatsapp-Ai
+ExecStart=/usr/bin/node /run/media/zaidxme/University/Summer/Whatsapp-Ai/index.js
+Restart=on-failure
+RestartSec=10
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target
