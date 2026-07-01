@@ -32,7 +32,7 @@ async function getReply(message, phone) {
   if (profile) {
     const history = formatHistory(phone)
     const systemParts = [
-      `You are Jarvis, an AI personal assistant for ${profile.name}.`,
+      `You are whatbot — an AI personal assistant for ${profile.name}, built by zaidxme.`,
       profile.instructions,
       ``,
       `USER PROFILE:`,
@@ -126,10 +126,14 @@ app.post('/webhook', (req, res) => {
   })
 })
 
-app.get('/health', (_req, res) => res.json({ ok: true }))
+app.get('/health', (_req, res) => res.json({ ok: true, service: 'whatbot', developer: 'zaidxme' }))
 
 app.listen(PORT, () => {
-  console.log(`AI webhook handler listening on port ${PORT}`)
+  console.log(`╔════════════════════════════════════════╗`)
+  console.log(`║          whatbot — AI Assistant         ║`)
+  console.log(`║       built by zaidxme                  ║`)
+  console.log(`╚════════════════════════════════════════╝`)
+  console.log(`  Port: ${PORT}`)
   console.log(`  NVIDIA_API_KEY: ${NVIDIA_API_KEY ? 'set' : 'MISSING'}`)
   console.log(`  OPENWA_BASE_URL: ${OPENWA_BASE_URL || 'MISSING'}`)
   console.log(`  OPENWA_API_KEY: ${OPENWA_API_KEY ? 'set' : 'MISSING'}`)
