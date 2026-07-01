@@ -38,7 +38,9 @@ async function getReply(message) {
     temperature: 0.7,
     timeout: 30000,
   })
-  return completion.choices[0].message.content.trim()
+  const content = completion.choices[0]?.message?.content
+  if (!content) return 'Sorry, I got an empty response from the AI.'
+  return content.trim()
 }
 
 app.post('/webhook', (req, res) => {
@@ -81,8 +83,18 @@ app.post('/webhook', (req, res) => {
         console.log(`[webhook] reply sent to ${data.from}`)
       }
     }
-  }).catch((err) => {
+  }).catch(async (err) => {
     console.error(`[webhook] AI error: ${err.message}`)
+    if (OPENWA_BASE_URL && OPENWA_API_KEY && sessionId && data) {
+      try {
+        const sendUrl = `${OPENWA_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
+        await fetch(sendUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENWA_API_KEY}` },
+          body: JSON.stringify({ chatId: data.from, text: 'Sorry, I had trouble processing that. Try asking again.' }),
+        })
+      } catch (_) { /* best-effort fallback */ }
+    }
   })
 })
 
