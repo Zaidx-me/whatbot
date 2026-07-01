@@ -36,11 +36,12 @@ async function getReply(message) {
     ],
     max_tokens: 1024,
     temperature: 0.7,
+    timeout: 30000,
   })
   return completion.choices[0].message.content.trim()
 }
 
-app.post('/webhook', async (req, res) => {
+app.post('/webhook', (req, res) => {
   const { event, sessionId, data } = req.body
   if (!event || !data) {
     return res.status(400).json({ error: 'Invalid webhook payload' })
@@ -56,8 +57,11 @@ app.post('/webhook', async (req, res) => {
 
   console.log(`[webhook] message from ${data.from}: ${messageBody.slice(0, 80)}`)
 
-  try {
-    const reply = await getReply(messageBody)
+  // Respond 200 immediately so OpenWA doesn't retry
+  res.json({ ok: true })
+
+  // Fire AI + reply asynchronously
+  getReply(messageBody).then(async (reply) => {
     console.log(`[webhook] AI reply to ${data.from}: ${reply.slice(0, 80)}`)
 
     if (OPENWA_BASE_URL && OPENWA_API_KEY && sessionId) {
@@ -68,10 +72,7 @@ app.post('/webhook', async (req, res) => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${OPENWA_API_KEY}`,
         },
-        body: JSON.stringify({
-          chatId: data.from,
-          text: reply,
-        }),
+        body: JSON.stringify({ chatId: data.from, text: reply }),
       })
       if (!resp.ok) {
         const errText = await resp.text().catch(() => '')
@@ -80,17 +81,16 @@ app.post('/webhook', async (req, res) => {
         console.log(`[webhook] reply sent to ${data.from}`)
       }
     }
-  } catch (err) {
+  }).catch((err) => {
     console.error(`[webhook] AI error: ${err.message}`)
-  }
-
-  res.json({ ok: true })
+  })
 })
 
 app.get('/health', (_req, res) => res.json({ ok: true }))
 
 app.listen(PORT, () => {
   console.log(`AI webhook handler listening on port ${PORT}`)
-  if (!NVIDIA_API_KEY) console.warn('WARNING: NVIDIA_API_KEY not set')
-  if (!OPENWA_BASE_URL || !OPENWA_API_KEY) console.warn('WARNING: OPENWA_BASE_URL/OPENWA_API_KEY not set — AI replies will not be sent back')
+  console.log(`  NVIDIA_API_KEY: ${NVIDIA_API_KEY ? 'set' : 'MISSING'}`)
+  console.log(`  OPENWA_BASE_URL: ${OPENWA_BASE_URL || 'MISSING'}`)
+  console.log(`  OPENWA_API_KEY: ${OPENWA_API_KEY ? 'set' : 'MISSING'}`)
 })
