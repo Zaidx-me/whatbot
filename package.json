@@ -1,0 +1,17 @@
+{
+  "name": "whatsapp-ai-assistant",
+  "version": "1.0.0",
+  "description": "Personal WhatsApp AI assistant with NVIDIA NIM brains",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "whatsapp-web.js": "^1.26.0",
+    "openai": "^4.73.0",
+    "googleapis": "^140.0.0",
+    "dotenv": "^16.4.0",
+    "qrcode-terminal": "^0.12.0"
+  }
+}
