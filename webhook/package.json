@@ -1,0 +1,12 @@
+{
+  "name": "whatsapp-ai-webhook",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "openai": "^4.80.0"
+  }
+}

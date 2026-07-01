@@ -1,4 +1,10 @@
 node_modules/
 .env
+data/
+dist/
+*.sqlite
+*.sqlite3
 .wwebjs_auth/
 .wwebjs_cache/
+# openwa submodule
+openwa/.git
