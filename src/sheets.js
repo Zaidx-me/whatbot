@@ -4,14 +4,17 @@ let sheets
 let sheetId
 
 export function init() {
-  const auth = new google.auth.JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-    scopes: ['https://www.googleapis.com/auth/spreadsheets'],
-  })
-
-  sheets = google.sheets({ version: 'v4', auth })
-  sheetId = process.env.GOOGLE_SHEET_ID
+  try {
+    const auth = new google.auth.JWT({
+      email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+      key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
+    })
+    sheets = google.sheets({ version: 'v4', auth })
+    sheetId = process.env.GOOGLE_SHEET_ID
+  } catch (err) {
+    console.warn('Sheets init failed, logging disabled:', err.message)
+  }
 }
 
 export async function logInteraction(timestamp, sender, userMessage, aiResponse) {

@@ -6,6 +6,10 @@ import { init as initAI } from './src/ai.js'
 import { init as initSheets } from './src/sheets.js'
 import { setup as setupWhatsApp } from './src/whatsapp.js'
 
+if (!process.env.HOST_NUMBER) {
+  console.error('FATAL: HOST_NUMBER is not set in .env')
+  process.exit(1)
+}
 initState(process.env.HOST_NUMBER)
 initAI()
 initSheets()
@@ -29,6 +33,9 @@ client.on('qr', (qr) => {
 client.on('ready', () => {
   console.log('WhatsApp AI Assistant is ready')
 })
+
+client.on('auth_failure', (msg) => console.error('Auth failure:', msg))
+client.on('disconnected', (reason) => console.warn('Disconnected:', reason))
 
 setupWhatsApp(client)
 

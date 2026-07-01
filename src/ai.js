@@ -19,8 +19,9 @@ export function init() {
 }
 
 export async function getReply(message) {
-  const model = isCodingQuery(message) ? CODING_MODEL : GENERAL_MODEL
-  const system = isCodingQuery(message)
+  const isCoding = isCodingQuery(message)
+  const model = isCoding ? CODING_MODEL : GENERAL_MODEL
+  const system = isCoding
     ? 'You are a helpful coding assistant. Provide concise, correct answers.'
     : 'You are a helpful assistant. Be friendly and concise.'
 
@@ -32,6 +33,7 @@ export async function getReply(message) {
     ],
     max_tokens: 1024,
     temperature: 0.7,
+    timeout: 30000,
   })
 
   return completion.choices[0].message.content.trim()
