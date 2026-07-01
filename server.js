@@ -9,7 +9,7 @@ let awayMode = false
 
 bus.on('away', (enabled) => { awayMode = enabled })
 
-export function startServer(port = 3000) {
+export function startServer(port = process.env.DASHBOARD_PORT || 3000) {
   const app = express()
 
   app.get('/status', (_, res) => {
