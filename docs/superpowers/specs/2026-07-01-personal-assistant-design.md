@@ -7,12 +7,12 @@ Turn the WhatsApp AI bot into a personalized "Jarvis" that knows the user's iden
 
 ### Current
 ```
-WhatsApp → OpenWA → webhook (single handler) → NVIDIA AI → reply
+WhatsApp → whatbot → webhook (single handler) → NVIDIA AI → reply
 ```
 
 ### Target
 ```
-WhatsApp (User A) → OpenWA → webhook → identify user by phone → 
+WhatsApp (User A) → whatbot → webhook → identify user by phone → 
   load profile → inject persona + history → NVIDIA AI → reply → save to memory
 ```
 

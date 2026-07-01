@@ -14,8 +14,8 @@ function isCodingQuery(text) {
 
 const NVIDIA_BASE_URL = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1'
 const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
-const OPENWA_BASE_URL = process.env.OPENWA_BASE_URL
-const OPENWA_API_KEY = process.env.OPENWA_API_KEY
+const WHATSAPP_BASE_URL = process.env.WHATSAPP_BASE_URL
+const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
 const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, timeout: 120000, maxRetries: 0 })
@@ -80,7 +80,7 @@ app.post('/webhook', (req, res) => {
 
   console.log(`[webhook] message from ${data.from}: ${messageBody.slice(0, 80)}`)
 
-  // Respond 200 immediately so OpenWA doesn't retry
+  // Respond 200 immediately so whatbot doesn't retry
   res.json({ ok: true })
 
   // Fire AI + reply asynchronously
@@ -89,21 +89,21 @@ app.post('/webhook', (req, res) => {
     addMessage(data.from, 'assistant', reply)
     console.log(`[webhook] AI reply to ${data.from}: ${reply.slice(0, 80)}`)
 
-    if (OPENWA_BASE_URL && OPENWA_API_KEY && sessionId) {
+    if (WHATSAPP_BASE_URL && WHATSAPP_API_KEY && sessionId) {
       try {
-        const sendUrl = `${OPENWA_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
+        const sendUrl = `${WHATSAPP_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
         const controller = new AbortController()
         const timeout = setTimeout(() => controller.abort(), 15000)
         const resp = await fetch(sendUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENWA_API_KEY}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${WHATSAPP_API_KEY}` },
           body: JSON.stringify({ chatId: data.from, text: reply }),
           signal: controller.signal,
         })
         clearTimeout(timeout)
         if (!resp.ok) {
           const errText = await resp.text().catch(() => '')
-          console.error(`[webhook] OpenWA API error ${resp.status}: ${errText}`)
+          console.error(`[webhook] whatbot API error ${resp.status}: ${errText}`)
         } else {
           console.log(`[webhook] reply sent to ${data.from}`)
         }
@@ -113,12 +113,12 @@ app.post('/webhook', (req, res) => {
     }
   }).catch(async (err) => {
     console.error(`[webhook] AI error: ${err.message}`)
-    if (OPENWA_BASE_URL && OPENWA_API_KEY && sessionId && data) {
+    if (WHATSAPP_BASE_URL && WHATSAPP_API_KEY && sessionId && data) {
       try {
-        const sendUrl = `${OPENWA_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
+        const sendUrl = `${WHATSAPP_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
         await fetch(sendUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENWA_API_KEY}` },
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${WHATSAPP_API_KEY}` },
           body: JSON.stringify({ chatId: data.from, text: 'Sorry, I had trouble processing that. Try asking again.' }),
         })
       } catch (_) { /* best-effort fallback */ }
@@ -135,8 +135,8 @@ app.listen(PORT, () => {
   console.log(`╚════════════════════════════════════════╝`)
   console.log(`  Port: ${PORT}`)
   console.log(`  NVIDIA_API_KEY: ${NVIDIA_API_KEY ? 'set' : 'MISSING'}`)
-  console.log(`  OPENWA_BASE_URL: ${OPENWA_BASE_URL || 'MISSING'}`)
-  console.log(`  OPENWA_API_KEY: ${OPENWA_API_KEY ? 'set' : 'MISSING'}`)
+  console.log(`  WHATSAPP_BASE_URL: ${WHATSAPP_BASE_URL || 'MISSING'}`)
+  console.log(`  WHATSAPP_API_KEY: ${WHATSAPP_API_KEY ? 'set' : 'MISSING'}`)
   console.log(`  Coding model: ${CODING_MODEL}`)
   console.log(`  General model: ${GENERAL_MODEL}`)
 })

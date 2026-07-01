@@ -6,5 +6,5 @@ dist/
 *.sqlite3
 .wwebjs_auth/
 .wwebjs_cache/
-# openwa submodule
-openwa/.git
+# whatbot submodule
+whatbot/.git
