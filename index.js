@@ -31,7 +31,7 @@ client.on('qr', (qr) => {
 
 client.on('ready', () => {
   console.log('WhatsApp AI Assistant is ready')
-  startServer(process.env.DASHBOARD_PORT || 3000)
+    startServer()
 })
 
 client.on('auth_failure', (msg) => console.error('Auth failure:', msg))

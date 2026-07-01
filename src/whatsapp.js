@@ -36,7 +36,7 @@ export function setup(client) {
       )
     } catch (err) {
       console.error('Message handler error:', err.message)
-      pushEvent({ type: 'message', timestamp: new Date().toISOString(), sender, message: msg.body, error: err.message })
+      pushEvent({ type: 'error', timestamp: new Date().toISOString(), sender, message: msg.body, error: err.message })
       try {
         await msg.reply('Sorry, I ran into an issue processing your message.')
       } catch (_) {}
