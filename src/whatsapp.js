@@ -1,4 +1,4 @@
-import { isAway, isHost, toggleAway } from './state.js'
+import { isAway, toggleAway } from './state.js'
 import { getReply } from './ai.js'
 import { logInteraction } from './sheets.js'
 
@@ -10,15 +10,14 @@ export function setup(client) {
 
       if (chat.isGroup) return
 
-      if (isHost(sender) && msg.body.trim() === '!away') {
+      if (msg.body.trim() === '!away') {
         const now = toggleAway()
         await msg.reply(`Away mode is now ${now ? 'ON' : 'OFF'}`)
         return
       }
 
-      if (isHost(sender)) return
-      if (!isAway()) return
       if (msg.body.startsWith('!')) return
+      if (!isAway()) return
 
       const reply = await getReply(msg.body)
 

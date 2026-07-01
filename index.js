@@ -2,21 +2,16 @@ import 'dotenv/config'
 import pkg from 'whatsapp-web.js'
 import qrcode from 'qrcode-terminal'
 const { Client, LocalAuth } = pkg
-import { init as initState } from './src/state.js'
 import { init as initAI } from './src/ai.js'
 import { init as initSheets } from './src/sheets.js'
 import { setup as setupWhatsApp } from './src/whatsapp.js'
 
-if (!process.env.HOST_NUMBER) {
-  console.error('FATAL: HOST_NUMBER is not set in .env')
-  process.exit(1)
-}
-initState(process.env.HOST_NUMBER)
 initAI()
 initSheets()
 
 const client = new Client({
   authStrategy: new LocalAuth(),
+  webVersionCache: { type: 'none' },
   puppeteer: {
     executablePath: '/usr/bin/chromium',
     headless: 'shell',
@@ -25,8 +20,8 @@ const client = new Client({
       '--disable-setuid-sandbox',
       '--disable-dev-shm-usage',
       '--disable-gpu',
-      '--disable-extensions',
     ],
+    defaultViewport: null,
   },
 })
 
