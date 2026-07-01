@@ -169,7 +169,7 @@ export function Layout({ onLogout, userRole }: LayoutProps) {
           </div>
           <div style={{ width: 40 }} />
         </header>
-      )
+      )}
 
       {isMobile && isMobileOpen && <div className="sidebar-overlay" onClick={() => setIsMobileOpen(false)} />}
 
