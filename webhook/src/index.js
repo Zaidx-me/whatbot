@@ -18,7 +18,7 @@ const OPENWA_BASE_URL = process.env.OPENWA_BASE_URL
 const OPENWA_API_KEY = process.env.OPENWA_API_KEY
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
-const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, timeout: 60000, maxRetries: 0 })
+const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, timeout: 120000, maxRetries: 0 })
 
 const app = express()
 app.use(express.json())
@@ -56,7 +56,7 @@ async function getReply(message, phone) {
   const completion = await openai.chat.completions.create({
     model,
     messages: systemMessages,
-    max_tokens: 512,
+    max_tokens: isCoding ? 2048 : 512,
     temperature: 0.7,
   })
   const content = completion.choices[0]?.message?.content
@@ -90,20 +90,25 @@ app.post('/webhook', (req, res) => {
     console.log(`[webhook] AI reply to ${data.from}: ${reply.slice(0, 80)}`)
 
     if (OPENWA_BASE_URL && OPENWA_API_KEY && sessionId) {
-      const sendUrl = `${OPENWA_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
-      const resp = await fetch(sendUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${OPENWA_API_KEY}`,
-        },
-        body: JSON.stringify({ chatId: data.from, text: reply }),
-      })
-      if (!resp.ok) {
-        const errText = await resp.text().catch(() => '')
-        console.error(`[webhook] OpenWA API error ${resp.status}: ${errText}`)
-      } else {
-        console.log(`[webhook] reply sent to ${data.from}`)
+      try {
+        const sendUrl = `${OPENWA_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
+        const controller = new AbortController()
+        const timeout = setTimeout(() => controller.abort(), 15000)
+        const resp = await fetch(sendUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${OPENWA_API_KEY}` },
+          body: JSON.stringify({ chatId: data.from, text: reply }),
+          signal: controller.signal,
+        })
+        clearTimeout(timeout)
+        if (!resp.ok) {
+          const errText = await resp.text().catch(() => '')
+          console.error(`[webhook] OpenWA API error ${resp.status}: ${errText}`)
+        } else {
+          console.log(`[webhook] reply sent to ${data.from}`)
+        }
+      } catch (sendErr) {
+        console.error(`[webhook] send failed: ${sendErr.message}`)
       }
     }
   }).catch(async (err) => {
