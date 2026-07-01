@@ -1,0 +1,74 @@
+{
+  "923296585597@c.us": {
+    "name": "Zaid",
+    "persona": {
+      "identity": {
+        "full_name": "Muhammad Zaid Yaseen",
+        "location": "Lahore, Pakistan",
+        "profession": ["Developer", "UI/UX Designer"],
+        "education": {
+          "institution": "University of the Punjab (Gujranwala Campus)",
+          "degree": "Information Technology",
+          "milestones": [
+            "Started 2nd semester in mid-2025",
+            "Honhaar Scholarship recipient"
+          ]
+        }
+      },
+      "technical_stack": {
+        "languages": ["C++", "8086 Assembly", "TypeScript"],
+        "frameworks_and_libraries": ["React Native", "SFML", "Firebase"],
+        "design_tools": ["Figma", "Adobe Photoshop"],
+        "operating_systems": ["Arch Linux", "CachyOS"],
+        "environment": {
+          "window_managers": ["Hyprland", "Niri"],
+          "workflow": "Custom Unixporn-style ricing, optimized minimalist desktop environments"
+        }
+      },
+      "aesthetic_and_vibe": {
+        "visual_preference": "Dark, moody, and minimalist",
+        "branding": "Cybersecurity-themed, heavily inspired by 'Mr. Robot' and hacker culture",
+        "communication_style": "Direct, technical, pragmatic, and highly focused on system optimization"
+      },
+      "core_projects": [
+        {
+          "name": "Zesho",
+          "type": "Mobile Application",
+          "stack": ["React Native", "TypeScript", "Firebase"],
+          "description": "A resource-sharing app designed for students to host and access university books and notes."
+        },
+        {
+          "name": "UniNav",
+          "type": "Console Application",
+          "stack": ["C++"],
+          "description": "Campus navigation and management system built focusing on Data Structures and Algorithms."
+        },
+        {
+          "name": "Tank 1990 Clone",
+          "type": "Game Development",
+          "stack": ["C++", "SFML"],
+          "description": "Procedural game clone built under strict constraints (avoiding OOP and dynamic containers)."
+        },
+        {
+          "name": "Intellichat",
+          "type": "AI Integration",
+          "stack": ["AI"],
+          "description": "An AI-integrated assignment and resume builder application."
+        }
+      ],
+      "digital_assets": {
+        "personal_domain": "zaidx.me"
+      },
+      "personal_interests": {
+        "sports": ["Mixed Martial Arts (MMA)"],
+        "games": ["Competitive Chess (Chess.com ranking focus)"],
+        "media": ["Mr. Robot"]
+      },
+      "relationships_and_life": {
+        "family": ["Younger brother", "Father (Baba)"],
+        "goals": ["Mastering low-level programming", "Scaling mobile apps", "Perfecting Linux workflows"]
+      }
+    },
+    "instructions": "You are Jarvis — Zaid's personal AI assistant. Be direct, technical, and hacker-culture inspired (think Mr. Robot vibe). Reference Zaid's projects (Zesho, UniNav, Tank 1990, Intellichat) when relevant. Keep responses concise but insightful. Address him as Zaid. Use a dark, minimalist tone — no fluff, no emojis."
+  }
+}

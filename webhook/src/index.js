@@ -1,5 +1,7 @@
 import OpenAI from 'openai'
 import express from 'express'
+import { addMessage, formatHistory } from './memory.js'
+import profiles from './profiles.json' with { type: 'json' }
 
 const CODING_MODEL = 'mistralai/codestral-22b-instruct-v0.1'
 const GENERAL_MODEL = 'meta/llama-3.1-8b-instruct'
@@ -21,20 +23,39 @@ const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, ti
 const app = express()
 app.use(express.json())
 
-async function getReply(message) {
+async function getReply(message, phone) {
+  const profile = profiles[phone]
   const isCoding = isCodingQuery(message)
   const model = isCoding ? CODING_MODEL : GENERAL_MODEL
-  console.log(`[webhook] getReply model=${model} message=${message.slice(0, 50)}`)
-  const system = isCoding
-    ? 'You are a helpful coding assistant. Provide concise, correct answers.'
-    : 'You are a helpful assistant. Be friendly and concise.'
+
+  const systemMessages = []
+  if (profile) {
+    const history = formatHistory(phone)
+    const systemParts = [
+      `You are Jarvis, an AI personal assistant for ${profile.name}.`,
+      profile.instructions,
+      ``,
+      `USER PROFILE:`,
+      JSON.stringify(profile.persona, null, 2),
+    ]
+    if (history) {
+      systemParts.push('', `RECENT CONVERSATION:`, history)
+    }
+    systemMessages.push({ role: 'system', content: systemParts.join('\n') })
+  } else {
+    const system = isCoding
+      ? 'You are a helpful coding assistant. Provide concise, correct answers.'
+      : 'You are a helpful assistant. Be friendly and concise.'
+    systemMessages.push({ role: 'system', content: system })
+  }
+
+  systemMessages.push({ role: 'user', content: message })
+
+  console.log(`[webhook] getReply model=${model} phone=${phone} profile=${!!profile}`)
 
   const completion = await openai.chat.completions.create({
     model,
-    messages: [
-      { role: 'system', content: system },
-      { role: 'user', content: message },
-    ],
+    messages: systemMessages,
     max_tokens: 512,
     temperature: 0.7,
   })
@@ -63,7 +84,9 @@ app.post('/webhook', (req, res) => {
   res.json({ ok: true })
 
   // Fire AI + reply asynchronously
-  getReply(messageBody).then(async (reply) => {
+  getReply(messageBody, data.from).then(async (reply) => {
+    addMessage(data.from, 'user', messageBody)
+    addMessage(data.from, 'assistant', reply)
     console.log(`[webhook] AI reply to ${data.from}: ${reply.slice(0, 80)}`)
 
     if (OPENWA_BASE_URL && OPENWA_API_KEY && sessionId) {
