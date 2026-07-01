@@ -1,9 +1,0 @@
-{
-  "build": {
-    "dockerfile": "openwa/Dockerfile"
-  },
-  "deploy": {
-    "restartPolicyType": "always",
-    "numReplicas": 1
-  }
-}

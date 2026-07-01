@@ -1,9 +1,0 @@
-{
-  "build": {
-    "dockerfile": "webhook/Dockerfile"
-  },
-  "deploy": {
-    "restartPolicyType": "always",
-    "numReplicas": 1
-  }
-}
