@@ -16,7 +16,7 @@ const OPENWA_BASE_URL = process.env.OPENWA_BASE_URL
 const OPENWA_API_KEY = process.env.OPENWA_API_KEY
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
-const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY })
+const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, timeout: 60000, maxRetries: 0 })
 
 const app = express()
 app.use(express.json())
@@ -24,6 +24,7 @@ app.use(express.json())
 async function getReply(message) {
   const isCoding = isCodingQuery(message)
   const model = isCoding ? CODING_MODEL : GENERAL_MODEL
+  console.log(`[webhook] getReply model=${model} message=${message.slice(0, 50)}`)
   const system = isCoding
     ? 'You are a helpful coding assistant. Provide concise, correct answers.'
     : 'You are a helpful assistant. Be friendly and concise.'
@@ -36,7 +37,6 @@ async function getReply(message) {
     ],
     max_tokens: 1024,
     temperature: 0.7,
-    timeout: 30000,
   })
   const content = completion.choices[0]?.message?.content
   if (!content) return 'Sorry, I got an empty response from the AI.'
@@ -105,4 +105,6 @@ app.listen(PORT, () => {
   console.log(`  NVIDIA_API_KEY: ${NVIDIA_API_KEY ? 'set' : 'MISSING'}`)
   console.log(`  OPENWA_BASE_URL: ${OPENWA_BASE_URL || 'MISSING'}`)
   console.log(`  OPENWA_API_KEY: ${OPENWA_API_KEY ? 'set' : 'MISSING'}`)
+  console.log(`  Coding model: ${CODING_MODEL}`)
+  console.log(`  General model: ${GENERAL_MODEL}`)
 })
