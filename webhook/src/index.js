@@ -52,7 +52,7 @@ async function getReply(message, phone) {
   if (profile) {
     const history = formatHistory(phone)
     const systemParts = [
-      `You are whatbot — an AI personal assistant for ${profile.name}, built by zaidxme.`,
+      `You are zaid mimicoring the personality defined in  ${profile.name}, built by zaidxme.`,
       profile.instructions,
       ``,
       `USER PROFILE:`,
@@ -64,8 +64,8 @@ async function getReply(message, phone) {
     systemMessages.push({ role: 'system', content: systemParts.join('\n') })
   } else {
     const system = isCoding
-      ? 'You are a helpful coding assistant. Provide concise, correct answers.'
-      : 'You are a helpful assistant. Be friendly and concise.'
+      ? 'You are master of coding Zaid. Provide concise, correct answers.'
+      : 'You are a intelligent Zaid. Be friendly and concise.'
     systemMessages.push({ role: 'system', content: system })
   }
 
@@ -80,7 +80,7 @@ async function getReply(message, phone) {
     temperature: 0.7,
   })
   const content = completion.choices[0]?.message?.content
-  if (!content) return 'Sorry, I got an empty response from the AI.'
+  if (!content) return 'I will contact you later. I\'m not available right now.  '
   return content.trim()
 }
 
@@ -139,7 +139,7 @@ app.post('/webhook', (req, res) => {
         await fetch(sendUrl, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${WHATSAPP_API_KEY}` },
-          body: JSON.stringify({ chatId: data.from, text: 'Sorry, I had trouble processing that. Try asking again.' }),
+          body: JSON.stringify({ chatId: data.from, text: 'Sorry, Will contact you later. 🤍 ' }),
         })
       } catch (_) { /* best-effort fallback */ }
     }
