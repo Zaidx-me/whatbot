@@ -212,6 +212,17 @@ export function useRevokeApiKeyMutation() {
   });
 }
 
+export function useUpdateApiKeyMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<import('../services/api').ApiKey> }) =>
+      apiKeyApi.update(id, data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.apiKeys });
+    },
+  });
+}
+
 // ── Logs Queries ──────────────────────────────────────────────────────
 
 export function useLogsQuery(params: { severity?: string; page: number; limit: number }) {

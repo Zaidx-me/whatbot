@@ -479,8 +479,13 @@
     "actions": {
       "copy": "Copy",
       "revoke": "Revoke",
-      "delete": "Delete"
-    }
+      "delete": "Delete",
+      "editSessions": "Manage Sessions"
+    },
+    "sessions": "Sessions",
+    "noSessions": "No sessions available",
+    "editSessionsTitle": "Manage Sessions",
+    "editSessionsHint": "Select sessions that {{name}} can access:"
   },
   "logs": {
     "title": "Audit Logs",
