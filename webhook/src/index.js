@@ -4,7 +4,7 @@ import { addMessage, formatHistory } from './memory.js'
 import profiles from './profiles.json' with { type: 'json' }
 
 const CODING_MODEL = 'mistralai/codestral-22b-instruct-v0.1'
-const GENERAL_MODEL = 'meta/llama-3.1-8b-instruct'
+const GENERAL_MODEL = 'mistralai/mistral-large-2407'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
@@ -131,8 +131,8 @@ app.get('/health', (_req, res) => res.json({ ok: true, service: 'whatbot', devel
 
 app.listen(PORT, () => {
   console.log(`╔════════════════════════════════════════╗`)
-  console.log(`║          whatbot — AI Assistant         ║`)
-  console.log(`║       built by zaidxme                  ║`)
+  console.log(`║          whatbot — AI Assistant        ║`)
+  console.log(`║       built by zaidxme                 ║`)
   console.log(`╚════════════════════════════════════════╝`)
   console.log(`  Port: ${PORT}`)
   console.log(`  NVIDIA_API_KEY: ${NVIDIA_API_KEY ? 'set' : 'MISSING'}`)
