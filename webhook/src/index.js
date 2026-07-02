@@ -4,7 +4,7 @@ import { addMessage, formatHistory } from './memory.js'
 import profiles from './profiles.json' with { type: 'json' }
 
 const CODING_MODEL = 'mistralai/codestral-22b-instruct-v0.1'
-const GENERAL_MODEL = 'meta/llama-3.3-70b-instruct'
+const GENERAL_MODEL = 'nvidia/nemotron-3-ultra-550b-a55b'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {

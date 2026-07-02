@@ -170,6 +170,15 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
         affected: result.affected,
       });
     }
+
+    // Auto-create webhooks for existing sessions if DEFAULT_WEBHOOK_URL is set
+    const defaultWebhookUrl = this.configService?.get<string>('webhook.defaultUrl');
+    if (defaultWebhookUrl) {
+      const sessions = await this.sessionRepository.find({ select: ['id'] });
+      for (const session of sessions) {
+        await this.ensureWebhook(session.id, defaultWebhookUrl);
+      }
+    }
   }
 
   async onApplicationBootstrap(): Promise<void> {
@@ -292,6 +301,12 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
       sessionId: saved.id,
       source: 'SessionService',
     });
+
+    // Auto-create webhook if DEFAULT_WEBHOOK_URL is configured
+    const defaultWebhookUrl = this.configService?.get<string>('webhook.defaultUrl');
+    if (defaultWebhookUrl) {
+      await this.ensureWebhook(saved.id, defaultWebhookUrl);
+    }
 
     return saved;
   }
@@ -1384,11 +1399,12 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     // Scope to the caller's allowedSessions so a session-restricted key cannot enumerate the count /
     // status distribution of sessions it has no rights to (matches the scoped GET /sessions route).
     // null = unrestricted (legacy keys), empty array = no sessions, non-empty = scoped.
-    const scope = allowedSessions === null || allowedSessions === undefined
-      ? null
-      : allowedSessions.length > 0
-        ? allowedSessions
-        : null; // empty array → scope null → query returns zero rows
+    const scope =
+      allowedSessions === null || allowedSessions === undefined
+        ? null
+        : allowedSessions.length > 0
+          ? allowedSessions
+          : null; // empty array → scope null → query returns zero rows
     // Aggregate status counts in the database instead of loading every row. findAll() is bounded by
     // DEFAULT_LIST_LIMIT for the HTTP routes, so reusing it here would silently undercount `total` and
     // `byStatus` on deployments with more sessions than that cap. A grouped COUNT is correct at any
@@ -1443,5 +1459,34 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Ensure a webhook exists for the session pointing to the given URL.
+   * If no webhook exists for this URL, create one with all common events.
+   */
+  private async ensureWebhook(sessionId: string, url: string): Promise<void> {
+    try {
+      const existing = await this.webhookService.findBySession(sessionId);
+      const alreadyExists = existing.some(w => w.url === url);
+      if (!alreadyExists) {
+        await this.webhookService.create(sessionId, {
+          url,
+          events: ['message.received', 'message.sent', 'message.ack', 'session.authenticated', 'session.disconnected'],
+        });
+        this.logger.log(`Auto-created webhook for session`, {
+          sessionId,
+          url,
+          action: 'auto_webhook_created',
+        });
+      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Failed to auto-create webhook for session`, msg, {
+        sessionId,
+        url,
+        action: 'auto_webhook_failed',
+      });
+    }
   }
 }
