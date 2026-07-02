@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken, getDataSourceToken } from '@nestjs/typeorm';
 import { Repository, DataSource, In } from 'typeorm';
-import { NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SessionService, ACK_RECONCILE_DELAY_MS } from './session.service';
 import { Session, SessionStatus } from './entities/session.entity';
@@ -324,6 +324,47 @@ describe('SessionService', () => {
       (repository.findOne as jest.Mock).mockResolvedValue(null);
 
       await expect(service.findOne('nonexistent')).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  // ── allowedSessions enforcement ───────────────────────────────────
+  describe('allowedSessions enforcement', () => {
+    it('findOne returns session when allowedSessions is null (unrestricted)', async () => {
+      const session = createMockSession({ id: 'sess-1' });
+      (repository.findOne as jest.Mock).mockResolvedValue(session);
+
+      const result = await service.findOne('sess-1', null);
+
+      expect(result.id).toBe('sess-1');
+    });
+
+    it('findOne returns session when allowedSessions is empty (unrestricted)', async () => {
+      const session = createMockSession({ id: 'sess-1' });
+      (repository.findOne as jest.Mock).mockResolvedValue(session);
+
+      const result = await service.findOne('sess-1', []);
+
+      expect(result.id).toBe('sess-1');
+    });
+
+    it('findOne returns session when session is in allowedSessions', async () => {
+      const session = createMockSession({ id: 'sess-1' });
+      (repository.findOne as jest.Mock).mockResolvedValue(session);
+
+      const result = await service.findOne('sess-1', ['sess-1', 'sess-2']);
+
+      expect(result.id).toBe('sess-1');
+    });
+
+    it('findOne throws ForbiddenException when session is not in allowedSessions', async () => {
+      await expect(service.findOne('sess-forbidden', ['sess-1', 'sess-2'])).rejects.toThrow(ForbiddenException);
+      await expect(service.findOne('sess-forbidden', ['sess-1', 'sess-2'])).rejects.toThrow('Access to this session is denied');
+    });
+
+    it('findOne does not query DB when session is not in allowedSessions', async () => {
+      await service.findOne('sess-forbidden', ['sess-1']).catch(() => {});
+
+      expect(repository.findOne).not.toHaveBeenCalled();
     });
   });
 
