@@ -3,8 +3,12 @@ import express from 'express'
 import { addMessage, formatHistory } from './memory.js'
 import profiles from './profiles.json' with { type: 'json' }
 
-const CODING_MODEL = 'google/diffusiongemma-26b-a4b-it'
-const GENERAL_MODEL = 'google/diffusiongemma-26b-a4b-it'
+// GLM-5.2 holds persona/instruction-following much better across a conversation
+// than DiffusionGemma right now, which matters more here than raw speed.
+// If you want to split traffic again later, swap CODING_MODEL back to
+// diffusiongemma for latency — coding answers lean less on persona anyway.
+const CODING_MODEL = 'z-ai/glm-5.2'
+const GENERAL_MODEL = 'z-ai/glm-5.2'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
@@ -43,6 +47,33 @@ function enqueue(fn) {
 const app = express()
 app.use(express.json())
 
+function buildSystemPrompt(profile, history) {
+  const parts = [
+    `You are Zaid. You are not playing a character or mimicking a personality — you ARE Zaid, replying to your own WhatsApp in first person. Never describe yourself in third person, never refer to "the personality" or "the profile" — that context below is just your own life, not a script.`,
+    profile.instructions,
+    ``,
+    `WHO YOU ARE:`,
+    JSON.stringify(profile.persona, null, 2),
+  ]
+
+  if (profile.voice_rules) {
+    parts.push('', `HOW YOU TEXT (follow exactly):`, JSON.stringify(profile.voice_rules, null, 2))
+  }
+
+  if (profile.few_shot_examples) {
+    parts.push('', `EXAMPLES OF HOW YOU REPLY IN DIFFERENT SITUATIONS — match this style, don't reuse the literal lines:`, JSON.stringify(profile.few_shot_examples, null, 2))
+  }
+
+  parts.push(
+    '',
+    `FORMAT: If your reply is more than one thought, separate each bubble with "|||" (e.g. "Hn|||abhi busy hn|||thori dr mein batata hn"). Do not use "|||" for anything else. Most replies should be 1-3 short bubbles, not one paragraph.`
+  )
+
+  if (history) parts.push('', `RECENT CONVERSATION:`, history)
+
+  return parts.join('\n')
+}
+
 async function getReply(message, phone) {
   const profile = profiles[phone]
   const isCoding = isCodingQuery(message)
@@ -51,17 +82,7 @@ async function getReply(message, phone) {
   const systemMessages = []
   if (profile) {
     const history = formatHistory(phone)
-    const systemParts = [
-      `You are zaid mimicoring the personality defined in  ${profile.name}, built by zaidxme.`,
-      profile.instructions,
-      ``,
-      `USER PROFILE:`,
-      JSON.stringify(profile.persona, null, 2),
-    ]
-    if (history) {
-      systemParts.push('', `RECENT CONVERSATION:`, history)
-    }
-    systemMessages.push({ role: 'system', content: systemParts.join('\n') })
+    systemMessages.push({ role: 'system', content: buildSystemPrompt(profile, history) })
   } else {
     const system = isCoding
       ? 'You are master of coding Zaid. Provide concise, correct answers.'
@@ -77,11 +98,42 @@ async function getReply(message, phone) {
     model,
     messages: systemMessages,
     max_tokens: isCoding ? 2048 : 1024,
-    temperature: 0.7,
+    temperature: isCoding ? 0.7 : 0.6,
+    // Nudges the model off generic high-probability filler like
+    // "How can I help you today?" — only apply on the persona path.
+    ...(isCoding ? {} : { frequency_penalty: 0.4 }),
   })
   const content = completion.choices[0]?.message?.content
   if (!content) return 'I will contact you later. I\'m not available right now.  '
   return content.trim()
+}
+
+// Splits a "|||"-delimited reply into individual WhatsApp bubbles.
+function splitBubbles(reply) {
+  return reply.split('|||').map(s => s.trim()).filter(Boolean)
+}
+
+async function sendBubbles(sendUrl, apiKey, chatId, bubbles) {
+  for (let i = 0; i < bubbles.length; i++) {
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 15000)
+    try {
+      const resp = await fetch(sendUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify({ chatId, text: bubbles[i] }),
+        signal: controller.signal,
+      })
+      if (!resp.ok) {
+        const errText = await resp.text().catch(() => '')
+        console.error(`[webhook] whatbot API error ${resp.status}: ${errText}`)
+      }
+    } finally {
+      clearTimeout(timeout)
+    }
+    // Small human-like gap between bubbles, skip after the last one
+    if (i < bubbles.length - 1) await new Promise(r => setTimeout(r, 600 + Math.random() * 900))
+  }
 }
 
 app.post('/webhook', (req, res) => {
@@ -106,27 +158,15 @@ app.post('/webhook', (req, res) => {
   // Fire AI + reply asynchronously (queued to limit concurrency)
   enqueue(() => getReply(messageBody, data.from)).then(async (reply) => {
     addMessage(data.from, 'user', messageBody)
-    addMessage(data.from, 'assistant', reply)
+    addMessage(data.from, 'assistant', reply.replace(/\|\|\|/g, ' '))
     console.log(`[webhook] AI reply to ${data.from}: ${reply.slice(0, 80)}`)
 
     if (WHATSAPP_BASE_URL && WHATSAPP_API_KEY && sessionId) {
+      const sendUrl = `${WHATSAPP_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
+      const bubbles = splitBubbles(reply)
       try {
-        const sendUrl = `${WHATSAPP_BASE_URL.replace(/\/$/, '')}/api/sessions/${sessionId}/messages/send-text`
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 15000)
-        const resp = await fetch(sendUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${WHATSAPP_API_KEY}` },
-          body: JSON.stringify({ chatId: data.from, text: reply }),
-          signal: controller.signal,
-        })
-        clearTimeout(timeout)
-        if (!resp.ok) {
-          const errText = await resp.text().catch(() => '')
-          console.error(`[webhook] whatbot API error ${resp.status}: ${errText}`)
-        } else {
-          console.log(`[webhook] reply sent to ${data.from}`)
-        }
+        await sendBubbles(sendUrl, WHATSAPP_API_KEY, data.from, bubbles)
+        console.log(`[webhook] reply sent to ${data.from} (${bubbles.length} bubble${bubbles.length > 1 ? 's' : ''})`)
       } catch (sendErr) {
         console.error(`[webhook] send failed: ${sendErr.message}`)
       }
