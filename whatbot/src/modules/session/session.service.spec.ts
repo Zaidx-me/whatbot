@@ -1736,7 +1736,7 @@ describe('SessionService', () => {
       }));
       mockEngine.getChats.mockResolvedValue(chats);
 
-      const result = await service.getChats('sess-uuid-1', { limit: 5, offset: 0 });
+      const result = await service.getChats('sess-uuid-1', undefined, { limit: 5, offset: 0 });
       expect(result).toHaveLength(5);
       expect(result[0].timestamp).toBe(49); // most-recent first
     });

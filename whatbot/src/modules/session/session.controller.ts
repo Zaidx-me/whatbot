@@ -83,8 +83,8 @@ export class SessionController {
     type: SessionResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async findOne(@Param('id') id: string): Promise<SessionResponseDto> {
-    const session = await this.sessionService.findOne(id);
+  async findOne(@Param('id') id: string, @CurrentApiKey() apiKey?: ApiKey): Promise<SessionResponseDto> {
+    const session = await this.sessionService.findOne(id, apiKey?.allowedSessions);
     return this.transformSession(session);
   }
 
@@ -95,8 +95,8 @@ export class SessionController {
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({ status: 204, description: 'Session deleted' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async delete(@Param('id') id: string): Promise<void> {
-    const session = await this.sessionService.findOne(id);
+  async delete(@Param('id') id: string, @CurrentApiKey() apiKey?: ApiKey): Promise<void> {
+    const session = await this.sessionService.findOne(id, apiKey?.allowedSessions);
     await this.sessionService.delete(id);
     await this.auditService.logInfo(AuditAction.SESSION_DELETED, {
       sessionId: id,
@@ -117,8 +117,8 @@ export class SessionController {
   })
   @ApiResponse({ status: 400, description: 'Session already started' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async start(@Param('id') id: string): Promise<SessionResponseDto> {
-    const session = await this.sessionService.start(id);
+  async start(@Param('id') id: string, @CurrentApiKey() apiKey?: ApiKey): Promise<SessionResponseDto> {
+    const session = await this.sessionService.start(id, apiKey?.allowedSessions);
     await this.auditService.logInfo(AuditAction.SESSION_STARTED, {
       sessionId: session.id,
       sessionName: session.name,
@@ -136,8 +136,8 @@ export class SessionController {
     type: SessionResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async stop(@Param('id') id: string): Promise<SessionResponseDto> {
-    const session = await this.sessionService.stop(id);
+  async stop(@Param('id') id: string, @CurrentApiKey() apiKey?: ApiKey): Promise<SessionResponseDto> {
+    const session = await this.sessionService.stop(id, apiKey?.allowedSessions);
     await this.auditService.logInfo(AuditAction.SESSION_STOPPED, {
       sessionId: session.id,
       sessionName: session.name,
@@ -155,8 +155,8 @@ export class SessionController {
     type: SessionResponseDto,
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async forceKill(@Param('id') id: string): Promise<SessionResponseDto> {
-    const session = await this.sessionService.forceKill(id);
+  async forceKill(@Param('id') id: string, @CurrentApiKey() apiKey?: ApiKey): Promise<SessionResponseDto> {
+    const session = await this.sessionService.forceKill(id, apiKey?.allowedSessions);
     await this.auditService.logInfo(AuditAction.SESSION_FORCE_KILLED, {
       sessionId: session.id,
       sessionName: session.name,
@@ -178,8 +178,8 @@ export class SessionController {
     description: 'QR code not ready or session already authenticated',
   })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async getQRCode(@Param('id') id: string): Promise<QRCodeResponseDto> {
-    const qrCode = await this.sessionService.getQRCode(id);
+  async getQRCode(@Param('id') id: string, @CurrentApiKey() apiKey?: ApiKey): Promise<QRCodeResponseDto> {
+    const qrCode = await this.sessionService.getQRCode(id, apiKey?.allowedSessions);
     await this.auditService.logInfo(AuditAction.SESSION_QR_GENERATED, {
       sessionId: id,
     });
@@ -196,8 +196,9 @@ export class SessionController {
   async requestPairingCode(
     @Param('id') id: string,
     @Body() dto: RequestPairingCodeDto,
+    @CurrentApiKey() apiKey?: ApiKey,
   ): Promise<PairingCodeResponseDto> {
-    return this.sessionService.requestPairingCode(id, dto.phoneNumber);
+    return this.sessionService.requestPairingCode(id, dto.phoneNumber, apiKey?.allowedSessions);
   }
 
   @Get(':id/groups')
@@ -215,8 +216,9 @@ export class SessionController {
     @Param('id') id: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @CurrentApiKey() apiKey?: ApiKey,
   ): Promise<{ id: string; name: string; linkedParentJID?: string | null }[]> {
-    return this.sessionService.getGroups(id, {
+    return this.sessionService.getGroups(id, apiKey?.allowedSessions, {
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
     });
@@ -234,8 +236,9 @@ export class SessionController {
     @Param('id') id: string,
     @Query('limit') limit?: string,
     @Query('offset') offset?: string,
+    @CurrentApiKey() apiKey?: ApiKey,
   ): Promise<ChatSummary[]> {
-    return this.sessionService.getChats(id, {
+    return this.sessionService.getChats(id, apiKey?.allowedSessions, {
       limit: limit ? parseInt(limit, 10) : undefined,
       offset: offset ? parseInt(offset, 10) : undefined,
     });
@@ -248,8 +251,8 @@ export class SessionController {
   @ApiResponse({ status: 200, description: 'Chat marked as read successfully' })
   @ApiResponse({ status: 400, description: 'Session not ready' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async markChatRead(@Param('id') id: string, @Body() dto: MarkChatReadDto): Promise<{ success: boolean }> {
-    const success = await this.sessionService.sendSeen(id, dto.chatId);
+  async markChatRead(@Param('id') id: string, @Body() dto: MarkChatReadDto, @CurrentApiKey() apiKey?: ApiKey): Promise<{ success: boolean }> {
+    const success = await this.sessionService.sendSeen(id, dto.chatId, apiKey?.allowedSessions);
     return { success };
   }
 
@@ -260,8 +263,8 @@ export class SessionController {
   @ApiResponse({ status: 200, description: 'Chat marked as unread successfully' })
   @ApiResponse({ status: 400, description: 'Session not ready' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async markChatUnread(@Param('id') id: string, @Body() dto: MarkChatReadDto): Promise<{ success: boolean }> {
-    const success = await this.sessionService.markUnread(id, dto.chatId);
+  async markChatUnread(@Param('id') id: string, @Body() dto: MarkChatReadDto, @CurrentApiKey() apiKey?: ApiKey): Promise<{ success: boolean }> {
+    const success = await this.sessionService.markUnread(id, dto.chatId, apiKey?.allowedSessions);
     return { success };
   }
 
@@ -272,8 +275,8 @@ export class SessionController {
   @ApiResponse({ status: 200, description: 'Chat deleted successfully' })
   @ApiResponse({ status: 400, description: 'Session not ready' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async deleteChat(@Param('id') id: string, @Body() dto: DeleteChatDto): Promise<{ success: boolean }> {
-    const success = await this.sessionService.deleteChat(id, dto.chatId);
+  async deleteChat(@Param('id') id: string, @Body() dto: DeleteChatDto, @CurrentApiKey() apiKey?: ApiKey): Promise<{ success: boolean }> {
+    const success = await this.sessionService.deleteChat(id, dto.chatId, apiKey?.allowedSessions);
     return { success };
   }
 
@@ -283,8 +286,8 @@ export class SessionController {
   @ApiParam({ name: 'id', description: 'Session ID' })
   @ApiResponse({ status: 200, description: 'Presence sent' })
   @ApiResponse({ status: 404, description: 'Session not found' })
-  async sendChatState(@Param('id') id: string, @Body() dto: SendChatStateDto): Promise<{ success: boolean }> {
-    await this.sessionService.sendChatState(id, dto.chatId, dto.state);
+  async sendChatState(@Param('id') id: string, @Body() dto: SendChatStateDto, @CurrentApiKey() apiKey?: ApiKey): Promise<{ success: boolean }> {
+    await this.sessionService.sendChatState(id, dto.chatId, dto.state, apiKey?.allowedSessions);
     return { success: true };
   }
 

@@ -398,8 +398,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     }
   }
 
-  async start(id: string): Promise<Session> {
-    const session = await this.findOne(id);
+  async start(id: string, allowedSessions?: string[] | null): Promise<Session> {
+    const session = await this.findOne(id, allowedSessions);
 
     // Reserve the slot SYNCHRONOUSLY (same tick as the has() check) so two near-simultaneous
     // start() calls can't both pass the check and orphan an engine — the has() -> engines.set()
@@ -1144,8 +1144,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     this.reconnectStates.delete(id);
   }
 
-  async stop(id: string): Promise<Session> {
-    const session = await this.findOne(id);
+  async stop(id: string, allowedSessions?: string[] | null): Promise<Session> {
+    const session = await this.findOne(id, allowedSessions);
 
     // Mark as tearing down BEFORE cleanup so an in-flight reconnect can't resurrect it.
     this.stoppingSessions.add(id);
@@ -1175,8 +1175,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
    * engine is hung. Mirrors stop()'s lifecycle (stop-mark + cancel-reconnect + bounded, isolated
    * teardown + Map reconciliation) but uses the engine's forceDestroy().
    */
-  async forceKill(id: string): Promise<Session> {
-    const session = await this.findOne(id);
+  async forceKill(id: string, allowedSessions?: string[] | null): Promise<Session> {
+    const session = await this.findOne(id, allowedSessions);
 
     // Mark as tearing down BEFORE cleanup so an in-flight reconnect can't resurrect it.
     this.stoppingSessions.add(id);
@@ -1196,8 +1196,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return this.findOne(id);
   }
 
-  async getQRCode(id: string): Promise<{ qrCode: string; status: SessionStatus }> {
-    const session = await this.findOne(id);
+  async getQRCode(id: string, allowedSessions?: string[] | null): Promise<{ qrCode: string; status: SessionStatus }> {
+    const session = await this.findOne(id, allowedSessions);
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1223,8 +1223,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
    * Request an 8-char pairing code (link via phone number) as an alternative to scanning the QR.
    * The session must be started but not yet authenticated.
    */
-  async requestPairingCode(id: string, phoneNumber: string): Promise<{ pairingCode: string; status: SessionStatus }> {
-    const session = await this.findOne(id);
+  async requestPairingCode(id: string, phoneNumber: string, allowedSessions?: string[] | null): Promise<{ pairingCode: string; status: SessionStatus }> {
+    const session = await this.findOne(id, allowedSessions);
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1272,9 +1272,10 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
 
   async getGroups(
     id: string,
+    allowedSessions?: string[] | null,
     opts: ListOptions = {},
   ): Promise<{ id: string; name: string; linkedParentJID?: string | null }[]> {
-    await this.findOne(id); // Verify session exists
+    await this.findOne(id, allowedSessions); // Verify session exists
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1290,8 +1291,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return paginate(mapped, opts.limit, opts.offset);
   }
 
-  async getChats(id: string, opts: ListOptions = {}): Promise<ChatSummary[]> {
-    await this.findOne(id); // Verify session exists
+  async getChats(id: string, allowedSessions?: string[] | null, opts: ListOptions = {}): Promise<ChatSummary[]> {
+    await this.findOne(id, allowedSessions); // Verify session exists
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1304,8 +1305,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return paginate(chats, opts.limit, opts.offset);
   }
 
-  async sendSeen(id: string, chatId: string): Promise<boolean> {
-    await this.findOne(id); // Verify session exists
+  async sendSeen(id: string, chatId: string, allowedSessions?: string[] | null): Promise<boolean> {
+    await this.findOne(id, allowedSessions); // Verify session exists
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1315,8 +1316,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return engine.sendSeen(chatId);
   }
 
-  async markUnread(id: string, chatId: string): Promise<boolean> {
-    await this.findOne(id); // Verify session exists
+  async markUnread(id: string, chatId: string, allowedSessions?: string[] | null): Promise<boolean> {
+    await this.findOne(id, allowedSessions); // Verify session exists
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1326,8 +1327,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return engine.markUnread(chatId);
   }
 
-  async deleteChat(id: string, chatId: string): Promise<boolean> {
-    await this.findOne(id); // Verify session exists
+  async deleteChat(id: string, chatId: string, allowedSessions?: string[] | null): Promise<boolean> {
+    await this.findOne(id, allowedSessions); // Verify session exists
     const engine = this.engines.get(id);
 
     if (!engine) {
@@ -1337,8 +1338,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return engine.deleteChat(chatId);
   }
 
-  async sendChatState(id: string, chatId: string, state: ChatState): Promise<void> {
-    await this.findOne(id); // Verify session exists
+  async sendChatState(id: string, chatId: string, state: ChatState, allowedSessions?: string[] | null): Promise<void> {
+    await this.findOne(id, allowedSessions); // Verify session exists
     const engine = this.engines.get(id);
 
     if (!engine) {

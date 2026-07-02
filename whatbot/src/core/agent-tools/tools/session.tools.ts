@@ -29,8 +29,8 @@ export function sessionTools(session: SessionService): ToolDescriptor[] {
       tier: 'read',
       sessionScoped: true,
       inputSchema: z.object({ sessionId }),
-      handler: (input: { sessionId: string }) =>
-        session.findOne(input.sessionId).then(s => SessionResponseDto.fromEntity(s)),
+      handler: (input: { sessionId: string }, apiKey) =>
+        session.findOne(input.sessionId, apiKey?.allowedSessions).then(s => SessionResponseDto.fromEntity(s)),
     },
     {
       name: 'SessionGetChats',
@@ -42,8 +42,8 @@ export function sessionTools(session: SessionService): ToolDescriptor[] {
         limit: z.number().int().min(1).max(1000).optional(),
         offset: z.number().int().min(0).optional(),
       }),
-      handler: (input: { sessionId: string; limit?: number; offset?: number }) =>
-        session.getChats(input.sessionId, { limit: input.limit, offset: input.offset }),
+      handler: (input: { sessionId: string; limit?: number; offset?: number }, apiKey) =>
+        session.getChats(input.sessionId, apiKey?.allowedSessions, { limit: input.limit, offset: input.offset }),
     },
     {
       name: 'SessionGetStats',
@@ -62,8 +62,8 @@ export function sessionTools(session: SessionService): ToolDescriptor[] {
         sessionId,
         chatId: z.string().describe('Chat JID (e.g. 1234567890@c.us)'),
       }),
-      handler: (input: { sessionId: string; chatId: string }) =>
-        session.sendSeen(input.sessionId, input.chatId).then(success => ({ success })),
+      handler: (input: { sessionId: string; chatId: string }, apiKey) =>
+        session.sendSeen(input.sessionId, input.chatId, apiKey?.allowedSessions).then(success => ({ success })),
     },
     {
       name: 'SessionMarkChatUnread',
@@ -75,8 +75,8 @@ export function sessionTools(session: SessionService): ToolDescriptor[] {
         sessionId,
         chatId: z.string().describe('Chat JID (e.g. 1234567890@c.us)'),
       }),
-      handler: (input: { sessionId: string; chatId: string }) =>
-        session.markUnread(input.sessionId, input.chatId).then(success => ({ success })),
+      handler: (input: { sessionId: string; chatId: string }, apiKey) =>
+        session.markUnread(input.sessionId, input.chatId, apiKey?.allowedSessions).then(success => ({ success })),
     },
     {
       name: 'SessionSendChatState',
@@ -91,8 +91,8 @@ export function sessionTools(session: SessionService): ToolDescriptor[] {
           .enum(['typing', 'recording', 'paused'])
           .describe("'typing' or 'recording' shows the indicator; 'paused' clears it"),
       }),
-      handler: (input: { sessionId: string; chatId: string; state: ChatState }) =>
-        session.sendChatState(input.sessionId, input.chatId, input.state).then(() => ({ success: true })),
+      handler: (input: { sessionId: string; chatId: string; state: ChatState }, apiKey) =>
+        session.sendChatState(input.sessionId, input.chatId, input.state, apiKey?.allowedSessions).then(() => ({ success: true })),
     },
   ];
 }
