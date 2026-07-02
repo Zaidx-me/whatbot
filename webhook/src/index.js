@@ -4,7 +4,7 @@ import { addMessage, formatHistory } from './memory.js'
 import profiles from './profiles.json' with { type: 'json' }
 
 const CODING_MODEL = 'mistralai/codestral-22b-instruct-v0.1'
-const GENERAL_MODEL = 'mistralai/mistral-large-2407'
+const GENERAL_MODEL = 'meta/llama-3.3-70b-instruct'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
@@ -57,7 +57,7 @@ async function getReply(message, phone) {
   const completion = await openai.chat.completions.create({
     model,
     messages: systemMessages,
-    max_tokens: isCoding ? 2048 : 512,
+    max_tokens: isCoding ? 2048 : 1024,
     temperature: 0.7,
   })
   const content = completion.choices[0]?.message?.content
