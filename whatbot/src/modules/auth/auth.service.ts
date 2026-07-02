@@ -139,7 +139,7 @@ export class AuthService implements OnModuleInit {
       keyPrefix,
       role: dto.role || ApiKeyRole.OPERATOR,
       allowedIps: dto.allowedIps || null,
-      allowedSessions: dto.allowedSessions || null,
+      allowedSessions: dto.allowedSessions ?? [],
       expiresAt: dto.expiresAt ? new Date(dto.expiresAt) : null,
     });
 

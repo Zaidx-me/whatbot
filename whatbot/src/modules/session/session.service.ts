@@ -297,13 +297,16 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
   }
 
   async findAll(allowedSessions?: string[] | null, opts: ListOptions = {}): Promise<Session[]> {
-    // A session-restricted key only lists its own sessions; an unrestricted key (null/empty
-    // allowlist) lists all — mirroring the ApiKeyGuard allowedSessions model so a scoped key
-    // cannot enumerate every session through this aggregate route.
+    // null = unrestricted (legacy keys), empty array = no sessions, non-empty = scoped.
     const { limit, offset } = resolveListWindow(opts.limit, opts.offset);
     const options: FindManyOptions<Session> = { order: { createdAt: 'DESC' }, take: limit, skip: offset };
-    if (allowedSessions && allowedSessions.length > 0) {
+    if (allowedSessions === null || allowedSessions === undefined) {
+      // unrestricted — no where clause
+    } else if (allowedSessions.length > 0) {
       options.where = { id: In(allowedSessions) };
+    } else {
+      // empty array = no sessions allowed — return empty without querying
+      return [];
     }
     const sessions = await this.sessionRepository.find(options);
     return sessions.map(session => this.attachLastError(session));
@@ -329,7 +332,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
   }
 
   private assertSessionAccess(sessionId: string, allowedSessions?: string[] | null): void {
-    if (!allowedSessions || allowedSessions.length === 0) return;
+    // null = unrestricted (legacy keys), empty array = no sessions allowed
+    if (allowedSessions === null || allowedSessions === undefined) return;
     if (!allowedSessions.includes(sessionId)) {
       throw new ForbiddenException('Access to this session is denied');
     }
@@ -1379,7 +1383,12 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
   }> {
     // Scope to the caller's allowedSessions so a session-restricted key cannot enumerate the count /
     // status distribution of sessions it has no rights to (matches the scoped GET /sessions route).
-    const scope = allowedSessions && allowedSessions.length > 0 ? allowedSessions : null;
+    // null = unrestricted (legacy keys), empty array = no sessions, non-empty = scoped.
+    const scope = allowedSessions === null || allowedSessions === undefined
+      ? null
+      : allowedSessions.length > 0
+        ? allowedSessions
+        : null; // empty array → scope null → query returns zero rows
     // Aggregate status counts in the database instead of loading every row. findAll() is bounded by
     // DEFAULT_LIST_LIMIT for the HTTP routes, so reusing it here would silently undercount `total` and
     // `byStatus` on deployments with more sessions than that cap. A grouped COUNT is correct at any

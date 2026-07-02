@@ -286,15 +286,20 @@ describe('SessionService', () => {
       });
     });
 
-    it('returns all sessions for an unrestricted key (null/empty allowlist)', async () => {
+    it('returns all sessions for an unrestricted key (null allowlist)', async () => {
       (repository.find as jest.Mock).mockResolvedValue([]);
 
       await service.findAll(null);
-      await service.findAll([]);
 
-      expect(repository.find).toHaveBeenCalledTimes(2);
+      expect(repository.find).toHaveBeenCalledTimes(1);
       expect(repository.find).toHaveBeenNthCalledWith(1, { order: { createdAt: 'DESC' }, take: 1000, skip: 0 });
-      expect(repository.find).toHaveBeenNthCalledWith(2, { order: { createdAt: 'DESC' }, take: 1000, skip: 0 });
+    });
+
+    it('returns empty for a key with empty allowedSessions (no sessions)', async () => {
+      const result = await service.findAll([]);
+
+      expect(result).toEqual([]);
+      expect(repository.find).not.toHaveBeenCalled();
     });
 
     it('applies bounded pagination to the database query', async () => {
@@ -338,13 +343,8 @@ describe('SessionService', () => {
       expect(result.id).toBe('sess-1');
     });
 
-    it('findOne returns session when allowedSessions is empty (unrestricted)', async () => {
-      const session = createMockSession({ id: 'sess-1' });
-      (repository.findOne as jest.Mock).mockResolvedValue(session);
-
-      const result = await service.findOne('sess-1', []);
-
-      expect(result.id).toBe('sess-1');
+    it('findOne throws ForbiddenException when allowedSessions is empty (no sessions)', async () => {
+      await expect(service.findOne('sess-1', [])).rejects.toThrow(ForbiddenException);
     });
 
     it('findOne returns session when session is in allowedSessions', async () => {
