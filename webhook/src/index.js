@@ -8,7 +8,7 @@ import profiles from './profiles.json' with { type: 'json' }
 // If you want to split traffic again later, swap CODING_MODEL back to
 // diffusiongemma for latency — coding answers lean less on persona anyway.
 const CODING_MODEL = 'z-ai/glm-5.2'
-const GENERAL_MODEL = 'z-ai/glm-5.2'
+const GENERAL_MODEL = 'sarvamai/sarvam-m'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
