@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
   OnModuleDestroy,
   OnModuleInit,
   OnApplicationBootstrap,
@@ -308,7 +309,8 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
     return sessions.map(session => this.attachLastError(session));
   }
 
-  async findOne(id: string): Promise<Session> {
+  async findOne(id: string, allowedSessions?: string[] | null): Promise<Session> {
+    this.assertSessionAccess(id, allowedSessions);
     const session = await this.sessionRepository.findOne({ where: { id } });
     if (!session) {
       throw new NotFoundException(`Session with id '${id}' not found`);
@@ -324,6 +326,13 @@ export class SessionService implements OnModuleDestroy, OnModuleInit, OnApplicat
   private attachLastError(session: Session): Session {
     session.lastError = session.status === SessionStatus.FAILED ? this.sessionErrors.get(session.id) : undefined;
     return session;
+  }
+
+  private assertSessionAccess(sessionId: string, allowedSessions?: string[] | null): void {
+    if (!allowedSessions || allowedSessions.length === 0) return;
+    if (!allowedSessions.includes(sessionId)) {
+      throw new ForbiddenException('Access to this session is denied');
+    }
   }
 
   async findByName(name: string): Promise<Session> {
