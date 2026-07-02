@@ -8,7 +8,7 @@ import profiles from './profiles.json' with { type: 'json' }
 // If you want to split traffic again later, swap CODING_MODEL back to
 // diffusiongemma for latency — coding answers lean less on persona anyway.
 const CODING_MODEL = 'z-ai/glm-5.2'
-const GENERAL_MODEL = 'mistralai/mistral-small-4-119b-2603'
+const GENERAL_MODEL = 'z-ai/glm-5.1'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
@@ -98,8 +98,8 @@ async function getReply(message, phone) {
   const completion = await openai.chat.completions.create({
     model,
     messages: systemMessages,
-    max_tokens: isCoding ? 2048 : 16384,
-    temperature: isCoding ? 0.10 : 0.10,
+    max_tokens: isCoding ? 16384 : 16384,
+    temperature: isCoding ? 1 : 1,
     // Nudges the model off generic high-probability filler like
     // "How can I help you today?" — only apply on the persona path.
     ...(isCoding ? {} : { frequency_penalty: 0.4 }),
