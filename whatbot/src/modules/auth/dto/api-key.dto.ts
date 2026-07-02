@@ -90,7 +90,7 @@ export class ApiKeyResponseDto {
 export class ApiKeyCreatedResponseDto extends ApiKeyResponseDto {
   @ApiProperty({
     description: 'Full API key (only shown once at creation)',
-    example: 'owa_k1_abc123...',
+    example: 'whatbot_abc123...',
   })
   apiKey: string;
 }

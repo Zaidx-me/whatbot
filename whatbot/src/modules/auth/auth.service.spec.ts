@@ -46,8 +46,8 @@ describe('resolveSeedApiKey (first-boot default admin key)', () => {
     expect(resolveSeedApiKey()).toBe('my-explicit-master-key');
   });
 
-  it('generates a random owa_k1_ key by default (no opt-in)', () => {
-    expect(resolveSeedApiKey()).toMatch(/^owa_k1_[a-f0-9]{64}$/);
+  it('generates a random whatbot_ key by default (no opt-in)', () => {
+    expect(resolveSeedApiKey()).toMatch(/^whatbot_[a-f0-9]{64}$/);
   });
 
   it('returns the fixed dev-admin-key only when ALLOW_DEV_API_KEY=true', () => {
@@ -63,7 +63,7 @@ describe('resolveSeedApiKey (first-boot default admin key)', () => {
 });
 
 describe('bannerKeyLine (startup banner key masking)', () => {
-  const FULL = 'owa_k1_0123456789abcdef0123456789abcdef';
+  const FULL = 'whatbot_0123456789abcdef0123456789abcdef';
 
   it('prints the full key only when it was just created', () => {
     expect(bannerKeyLine(FULL, true)).toBe(FULL);
@@ -72,7 +72,7 @@ describe('bannerKeyLine (startup banner key masking)', () => {
   it('masks the key on subsequent boots — the full secret is never re-logged', () => {
     const line = bannerKeyLine(FULL, false);
     expect(line).not.toContain('0123456789abcdef'); // the secret tail must not appear
-    expect(line.startsWith('owa_k1_0')).toBe(true); // a short fingerprint is fine
+    expect(line.startsWith('whatbot_0')).toBe(true); // a short fingerprint is fine
     expect(line).toMatch(/data\/\.api-key|dashboard/); // points the operator to the real source
   });
 
@@ -111,14 +111,14 @@ describe('AuthService', () => {
   // ── createApiKey ──────────────────────────────────────────────────
 
   describe('createApiKey', () => {
-    it('should generate a key with owa_k1_ prefix and save to DB', async () => {
+    it('should generate a key with whatbot_ prefix and save to DB', async () => {
       const mockSaved = createMockApiKey({ name: 'My Key' });
       (repository.create as jest.Mock).mockReturnValue(mockSaved);
       (repository.save as jest.Mock).mockResolvedValue(mockSaved);
 
       const result = await service.createApiKey({ name: 'My Key' });
 
-      expect(result.rawKey).toMatch(/^owa_k1_[a-f0-9]{64}$/);
+      expect(result.rawKey).toMatch(/^whatbot_[a-f0-9]{64}$/);
       expect(result.apiKey).toBe(mockSaved);
       expect(repository.create).toHaveBeenCalledWith(
         expect.objectContaining({
