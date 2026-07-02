@@ -21,6 +21,25 @@ const PORT = parseInt(process.env.PORT || '3000', 10)
 
 const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, timeout: 120000, maxRetries: 0 })
 
+// Concurrency limiter — max 3 concurrent AI requests to avoid NVIDIA rate limits
+let activeRequests = 0
+const MAX_CONCURRENT = 3
+const requestQueue = []
+
+function enqueue(fn) {
+  return new Promise((resolve, reject) => {
+    const run = async () => {
+      activeRequests++
+      try { resolve(await fn()) } catch (e) { reject(e) } finally {
+        activeRequests--
+        if (requestQueue.length > 0) requestQueue.shift()()
+      }
+    }
+    if (activeRequests < MAX_CONCURRENT) run()
+    else requestQueue.push(run)
+  })
+}
+
 const app = express()
 app.use(express.json())
 
@@ -84,8 +103,8 @@ app.post('/webhook', (req, res) => {
   // Respond 200 immediately so whatbot doesn't retry
   res.json({ ok: true })
 
-  // Fire AI + reply asynchronously
-  getReply(messageBody, data.from).then(async (reply) => {
+  // Fire AI + reply asynchronously (queued to limit concurrency)
+  enqueue(() => getReply(messageBody, data.from)).then(async (reply) => {
     addMessage(data.from, 'user', messageBody)
     addMessage(data.from, 'assistant', reply)
     console.log(`[webhook] AI reply to ${data.from}: ${reply.slice(0, 80)}`)
