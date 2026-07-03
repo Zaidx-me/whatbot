@@ -7,8 +7,8 @@ import profiles from './profiles.json' with { type: 'json' }
 // than DiffusionGemma right now, which matters more here than raw speed.
 // If you want to split traffic again later, swap CODING_MODEL back to
 // diffusiongemma for latency — coding answers lean less on persona anyway.
-const CODING_MODEL = 'gemini-2.5-flash'
-const GENERAL_MODEL = 'gemini-2.5-flash'
+const CODING_MODEL = 'z-ai/glm-5.2'
+const GENERAL_MODEL = 'z-ai/glm-5.2'
 const CODING_KEYWORDS = ['```', 'function', 'class ', 'def ', 'import ', 'const ', 'let ', 'var ', '=>', 'console.log', '#include', 'npm ', 'git ', 'code', 'bug', 'error', 'debug', 'compile', 'syntax', 'algorithm', 'api']
 
 function isCodingQuery(text) {
@@ -16,14 +16,14 @@ function isCodingQuery(text) {
   return CODING_KEYWORDS.some(kw => lower.includes(kw))
 }
 
-const GOOGLE_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta/openai'
-const GOOGLE_API_KEY = process.env.GOOGLE_API_KEY
+const NVIDIA_BASE_URL = process.env.NVIDIA_BASE_URL || 'https://integrate.api.nvidia.com/v1'
+const NVIDIA_API_KEY = process.env.NVIDIA_API_KEY
 let WHATSAPP_BASE_URL = process.env.WHATSAPP_BASE_URL
 if (WHATSAPP_BASE_URL && !WHATSAPP_BASE_URL.startsWith('http')) WHATSAPP_BASE_URL = 'https://' + WHATSAPP_BASE_URL
 const WHATSAPP_API_KEY = process.env.WHATSAPP_API_KEY
 const PORT = parseInt(process.env.PORT || '3000', 10)
 
-const openai = new OpenAI({ baseURL: GOOGLE_BASE_URL, apiKey: GOOGLE_API_KEY, timeout: 120000, maxRetries: 0 })
+const openai = new OpenAI({ baseURL: NVIDIA_BASE_URL, apiKey: NVIDIA_API_KEY, timeout: 120000, maxRetries: 0 })
 
 // Concurrency limiter — max 3 concurrent AI requests to avoid NVIDIA rate limits
 let activeRequests = 0
@@ -201,7 +201,7 @@ app.listen(PORT, () => {
   console.log(`║       built by zaidxme                 ║`)
   console.log(`╚════════════════════════════════════════╝`)
   console.log(`  Port: ${PORT}`)
-  console.log(`  GOOGLE_API_KEY: ${GOOGLE_API_KEY ? 'set' : 'MISSING'}`)
+  console.log(`  NVIDIA_API_KEY: ${NVIDIA_API_KEY ? 'set' : 'MISSING'}`)
   console.log(`  WHATSAPP_BASE_URL: ${WHATSAPP_BASE_URL || 'MISSING'}`)
   console.log(`  WHATSAPP_API_KEY: ${WHATSAPP_API_KEY ? 'set' : 'MISSING'}`)
   console.log(`  Coding model: ${CODING_MODEL}`)
